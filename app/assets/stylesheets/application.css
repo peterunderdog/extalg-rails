@@ -13,3 +13,6 @@
  *= require_tree .
  *= require_self
  */
+canvas.qdraw {
+	border: 1px solid #cccccc;
+}
