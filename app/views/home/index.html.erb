@@ -1,0 +1,95 @@
+<h1>The Ext-algebra Page</h1>
+
+<h2>Introduction</h2>
+<p>Welcome to the Ext-algebra page! Using links on this page, you may
+<ul>
+	<li>define a special biserial algebra by drawing its quiver and relations
+	using a Java applet (<a href="qcad.html">
+			<i><font color=red>q</font>ui<font color=red>v</font>erC<font color=red>A</font>D</I></A>)
+	
+  <li>use a <%= link_to "web application", compute_path %> to compute the 
+    basis of the Ext-algebra of your algebra using the method developed in <a href="http://www.sciencedirect.com/science?_ob=IssueURL&_tockey=%23TOC%236838%231999%23997789997%23302154%23FLP%23Volume_221,_Issue_2,_Pages_385-734_(15_November_1999)&_auth=y&view=c&_acct=C000053443&_version=1&_urlVersion=0&_userid=1516330&md5=3c1202ff78e9a05447aa9dad0aff4035"> 
+    The Ext-algebra of a Representation-Finite Biserial Algebra</A>, <cite>Journal 
+    of Algebra</cite> <b>221</b> 611-629 (1999) 
+  <li>
+    <td align=center><a href="javadoc/">View the <i><font color=red>q</font>ui<font color=red>v</font>erC<font color=red>A</font>D</i> 
+      Java API</A> </ul>
+
+<p>For more information, follow one of these links:
+<ul>
+	<li><a href="qcad.html">Using
+			<i><font color=red>q</font>ui<font color=red>v</font>erC<font color=red>A</font>D</I></A>
+	<li><a href="examples.html">Examples</A>
+	
+  <li><%= link_to "Compute an Ext-algebra", compute_path %> 
+</ul>
+
+<h2>Warning</h2>
+<p>This software is still in its infancy so it may not be well-behaved
+at all times. Some symptoms of bad behavior may include
+<ul>
+	<li>incorrect results
+	<li>unexpected results
+	<li>failure to return results (infinite loop)
+</ul>
+
+<h2>Requirements</h2>
+<p>In order to run the
+<i><font color=red>q</font>ui<font color=red>v</font>erC<font color=red>A</font>D</i>
+applet, you will need the
+<a href="http://java.sun.com/products/plugin/1.3/plugin-install.html">Java 1.3 plug-in</a>,
+which is available for download from Sun's Java site.  If the
+plug-in is not installed, you will be prompted to download and install it when you try
+to run the applet.
+
+<p>The applet does not appear to work on Macs at the moment )-:
+
+<h2>Notes on Ext-algebra computation</h2>
+<p>
+The
+<i><font color=red>q</font>ui<font color=red>v</font>erC<font color=red>A</font>D</i>
+applet does not yet check that the relations defined on the quiver satisfy the special
+biserial conditions but the computational engine that calculates the Ext-algebra makes
+some implicit assumptions about the input it receives. Therefore, if the quiver submitted
+for computation is not special biserial, some implicit relations will be imposed on it to
+make it special biserial. In particular, any two parallel paths will be assumed to be
+equal. In a future version of 
+<i><font color=red>q</font>ui<font color=red>v</font>erC<font color=red>A</font>D</i>
+the special biserial conditions will be checked whenever an arrow is added to the quiver,
+and whenever relations are deleted to ensure that the quiver always represents a special
+biserial algebra.
+
+<p>The Ext-algebra computational engine terminates non-zero cycles at length 62 to prevent
+infinite loops.
+
+<p>Basis elements which are cyclic (i.e., long exact sequence beginning and ending
+with the same simple module) are not extended further by the program,
+so the actual basis contains all products of these sequences. The products will not
+be contained in the set of minimal generators anyway.
+
+<p>Special biserial algebras of infinite representation type are identified by the
+Ext-algebra engine by looking for <i>primitive V-sequences</i>, that is string modules
+which can be joined arbitrarily many times with themselves to yield indecomposable
+modules of arbitrary length. The algorithm for computing Ext-algebras does not apply to
+the case of infinite representation type.
+
+<h2>Product plugs</h2>
+
+<p>The following (mostly) free software products were used to develop this application,
+and web site:
+
+<ul>
+	<li>All text including Perl/Java programs, and web pages edited using
+			<a href="http://www.fsf.org">GNU</a> <a href="http://www.gnu.org/software/emacs/emacs.html">Emacs</a>
+	<li>The Emacs <a href="http://sunsite.auc.dk/jde">JDE</A> (Java Development Environment)
+			was used for applet development/debugging.
+	<li>HTML edited using Emacs
+			<a href="http://www.gest.unipd.it/~saint/hth.html">html-helper-mode</a>
+	<li>Sun <a href="http://java.sun.com">jdk 1.2.2</a>
+	<li>Image production by the <a href="http://www.gimp.org">GIMP</a>
+	<li>Web backend powered by <a href="http://www.perl.org">Perl</A> and
+			<a href="http://www.apache.org">Apache</A>
+</ul>
+
+<hr>
+<p><em>(c) 2003 <a href="http://www-unix.oit.umass.edu/~brownp/">Peter Brown</a> (<a href="mailto:pbrown@microbio.umass.edu">pbrown@microbio.umass.edu</a>)</em>
