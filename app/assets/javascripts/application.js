@@ -14,4 +14,5 @@
 //= require jquery-ui
 //= require jquery_ujs
 //= require jcanvas.min
+//= require jquery-readyselector
 //= require_tree .
