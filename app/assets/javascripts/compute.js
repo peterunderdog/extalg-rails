@@ -30,10 +30,10 @@ $('canvas.qdraw').ready(function() {
 
 		this.draw = function() {
 			theCanvas.clearCanvas();
+			theCanvas.drawGrid();
 			for (ix in this.qitems) {
 				this.qitems[ix].draw();
 			}
-			theCanvas.drawGrid();
 		};
 	};
 
