@@ -53,10 +53,11 @@ $('canvas.qdraw').ready(function() {
 		};
 
 		this.draw = function(canvas) {
-			this.drawGrid(canvas);
+			$(canvas).clearCanvas();
 			for (ix in this.qitems) {
 				this.qitems[ix].draw(canvas);
 			}
+			this.drawGrid(canvas);
 		};
 	}
 
@@ -70,6 +71,11 @@ $('canvas.qdraw').ready(function() {
 		var qpoint = new QPoint(x, y, "1");
 		quiver.add(qpoint);
 		quiver.draw(e.target);
+		}).mouseover(function(e){
+			quiver.draw(e.target);
+		}).mousedown(function(e)
+		{
+			e.preventDefault();
 		});
 
 
