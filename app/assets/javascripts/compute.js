@@ -2,10 +2,9 @@ $('canvas.qdraw').ready(function() {
 
 	var theCanvas = $(this);
 
-	var QPoint = function(x, y, label)
+	var QPoint = function(pt, label)
 	{
-		this.x = x;
-		this.y = y;
+		this.pt = pt;
 		this.label = label;
 
 		this.draw = function()
@@ -15,7 +14,7 @@ $('canvas.qdraw').ready(function() {
   		strokeWidth: 1,
   		draggable: false,
   		fillStyle: 'black',
-  		x: x, y: y,
+  		x: this.pt.x, y: this.pt.y,
   		radius: 4
 			});
 		};
@@ -40,13 +39,15 @@ $('canvas.qdraw').ready(function() {
 
 	var quiver = new Quiver();
 
+	theCanvas.GRID_SIZE = 20;
+	theCanvas.SNAP_TOL = 8;
+
 	theCanvas.drawGrid = function() {
-		var GRID_SIZE = 20;
 		var height = theCanvas.height();
 		var width = theCanvas.width();
 
-		var x = GRID_SIZE;
-		var y = GRID_SIZE;
+		var x = this.GRID_SIZE;
+		var y = this.GRID_SIZE;
 
 		while (x < width || y < height)
 		{
@@ -54,25 +55,38 @@ $('canvas.qdraw').ready(function() {
 			{
 				theCanvas.drawLine({strokeStyle: '#aaa', strokeWidth: 1, 
 					x1: x, y1: 0, x2: x, y2: height});
-				x += GRID_SIZE;
+				x += this.GRID_SIZE;
 			}
 			if (y < height)
 			{
 				theCanvas.drawLine({strokeStyle: '#aaa', strokeWidth: 1, 
 					x1: 0, y1: y, x2: width, y2: y});
-				y += GRID_SIZE;
+				y += this.GRID_SIZE;
 			}
 		}
 	};
 
+	theCanvas.snapPoint = function(x, y) {
+		var roundx = Math.round(x/this.GRID_SIZE)*this.GRID_SIZE;
+		var roundy = Math.round(y/this.GRID_SIZE)*this.GRID_SIZE;
+		if (Math.abs(x-roundx) < this.SNAP_TOL && Math.abs(y-roundy) < this.SNAP_TOL)
+		{
+			return {x: roundx, y: roundy};
+		}
+		else
+		{
+			return null;
+		}
+	};
 
 	theCanvas.click(function(e){
-		var x = e.offsetX;
-		var y = e.offsetY;
-
-		var qpoint = new QPoint(x, y, "1");
-		quiver.add(qpoint);
-		quiver.draw();
+		var pt = theCanvas.snapPoint(e.offsetX, e.offsetY);
+		if (pt != null)
+		{
+			var qpoint = new QPoint(pt, "1");
+			quiver.add(qpoint);
+			quiver.draw();
+		}
 		}).mouseover(function(e){
 			quiver.draw(e.target);
 		}).mousedown(function(e) {
