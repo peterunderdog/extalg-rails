@@ -84,7 +84,7 @@ $('canvas.qdraw').ready(function() {
 			this.qitems.push(qitem);
 		};
 
-		this.addPoint = function(pt) {
+		this.getLabel = function() {
 			if (this.labelsAvailable.length == 0)
 			{
 				throw "All out of labels";
@@ -92,8 +92,21 @@ $('canvas.qdraw').ready(function() {
 			var label = this.labelsAvailable[0];
 			this.labelsAvailable.shift();
 			this.labelsUsed.unshift(label);
+			return label;
+		}
+
+		this.addPoint = function(pt) {
+			var label = this.getLabel();
 			var qpoint = new QPoint(pt, label);
 			this.add(qpoint);
+		};
+
+		this.deleteItem = function(qitem) {
+			var idx = this.qitems.indexOf(qitem);
+			if (idx > -1)
+			{
+				this.qitems.splice(idx, 1);
+			}
 		};
 
 		this.draw = function(canvas) {
