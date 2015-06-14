@@ -50,6 +50,11 @@ $('canvas.qdraw').ready(function() {
 		this.pt = pt;
 		this.label = label;
 
+		// distance from point pt
+		this.distance = function(pt) {
+			return Math.sqrt(Math.pow(this.pt.x-pt.x, 2) + Math.pow(this.pt.y-pt.y, 2));
+		};
+
 		this.draw = function(canvas)
 		{
 			canvas.drawArc({
@@ -84,6 +89,12 @@ $('canvas.qdraw').ready(function() {
 				Math.pow(this.end.pt.y - this.start.pt.y, 2));
 		};
 
+		// distance from point pt
+		// not implemented so return NaN
+		this.distance = function(pt) {
+			return NaN;
+		};
+
 		// vector in direction of arrow
 		this.v = function(){
 			return {x: end.pt.x - start.pt.x, y: end.pt.y - start.pt.y};
@@ -108,16 +119,15 @@ $('canvas.qdraw').ready(function() {
 		};
 
 		this.drawStart = function(){
+			// add extra offset if arrow will interfere with label
 			var arrow_offset = (this.u().y > 0.0 && this.u().x > -0.45 && this.u().x < 0.45) ? 
 			12 + this.ARROW_OFFSET : this.ARROW_OFFSET;
-
-			console.log(this.u().x);
-
 			return {x: Math.ceil(this.start.pt.x + this.u().x * arrow_offset), 
 				y: Math.ceil(this.start.pt.y + this.u().y * arrow_offset)};
 		};
 
 		this.drawEnd = function(){
+			// add extra offset if arrow will interfere with label
 			var arrow_offset = (this.u().y < 0.0 && this.u().x > -0.45 && this.u().x < 0.45	) ? 
 			12 + this.ARROW_OFFSET : this.ARROW_OFFSET;
 			return {x: Math.ceil(this.end.pt.x - this.u().x * arrow_offset), 
@@ -181,6 +191,20 @@ $('canvas.qdraw').ready(function() {
 			{
 				this.qitems.splice(idx, 1);
 			}
+		};
+
+		this.closestItem = function(pt) {
+			var mindist = NaN;
+			var closest = null;
+			for (ix in this.qitems) {
+				var dist = this.qitems[ix].distance(pt);
+				if (mindist==NaN or dist < mindist)
+				{
+					closest = this.qitems[ix];
+					mindist = dist;
+				}
+			}
+			return closest;
 		};
 
 		this.draw = function() {
