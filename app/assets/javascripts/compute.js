@@ -73,12 +73,79 @@ $('canvas.qdraw').ready(function() {
 		};
 	};
 
-	var Quiver = function()
+	var QArrow = function(start, end)
+	{
+		this.start = start;
+		this.end = end;
+		this.ARROW_OFFSET = 10;
+
+		this.norm = function() {
+			return Math.sqrt(Math.pow(this.end.pt.x - this.start.pt.x, 2) + 
+				Math.pow(this.end.pt.y - this.start.pt.y, 2));
+		};
+
+		// vector in direction of arrow
+		this.v = function(){
+			return {x: end.pt.x - start.pt.x, y: end.pt.y - start.pt.y};
+		};
+
+		// unit vector in direction of arrow
+		this.u = function(){
+			return {x: this.v().x/this.norm(), y: this.v().y/this.norm()};
+		};
+
+		// unit vector perpendicular to arrow, normalized so x component non-negative
+		this.p = function(){
+			var xx = this.u().y;
+			var yy = this.u().x;
+
+			if (xx < 0.0)
+			{
+				xx=-xx;
+				yy=-yy;
+			}
+			return {x: xx, y: yy};
+		};
+
+		this.drawStart = function(){
+			var arrow_offset = (this.u().y > 0.0 && this.u().x > -0.45 && this.u().x < 0.45) ? 
+			12 + this.ARROW_OFFSET : this.ARROW_OFFSET;
+
+			console.log(this.u().x);
+
+			return {x: Math.ceil(this.start.pt.x + this.u().x * arrow_offset), 
+				y: Math.ceil(this.start.pt.y + this.u().y * arrow_offset)};
+		};
+
+		this.drawEnd = function(){
+			var arrow_offset = (this.u().y < 0.0 && this.u().x > -0.45 && this.u().x < 0.45	) ? 
+			12 + this.ARROW_OFFSET : this.ARROW_OFFSET;
+			return {x: Math.ceil(this.end.pt.x - this.u().x * arrow_offset), 
+				y: Math.ceil(this.end.pt.y - this.u().y * arrow_offset)};
+		};
+
+		this.draw = function(canvas)
+		{
+			$('canvas').drawLine({
+			  strokeStyle: '#000',
+			  strokeWidth: 2,
+			  rounded: true,
+			  endArrow: true,
+			  arrowRadius: 10,
+			  arrowAngle: 30,
+			  x1: this.drawStart().x, y1: this.drawStart().y,
+			  x2: this.drawEnd().x, y2: this.drawEnd().y
+			});
+		};
+	};
+
+	var Quiver = function(canvas)
 	{
 		this.qitems = [];
 		this.labelsUsed = [];
 		this.labelsAvailable = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0".split('');
 		this.grid = new Grid(20, 8);
+		this.canvas = canvas;
 
 		this.add = function(qitem) {
 			this.qitems.push(qitem);
@@ -99,6 +166,13 @@ $('canvas.qdraw').ready(function() {
 			var label = this.getLabel();
 			var qpoint = new QPoint(pt, label);
 			this.add(qpoint);
+			return qpoint;
+		};
+
+		this.addArrow = function(start, end) {
+			var qarrow = new QArrow(start, end);
+			this.add(qarrow);
+			return qarrow;
 		};
 
 		this.deleteItem = function(qitem) {
@@ -109,32 +183,39 @@ $('canvas.qdraw').ready(function() {
 			}
 		};
 
-		this.draw = function(canvas) {
-			canvas.clearCanvas();
-			this.grid.draw(canvas);
+		this.draw = function() {
+			this.canvas.clearCanvas();
+			this.grid.draw(this.canvas);
 			for (ix in this.qitems) {
-				this.qitems[ix].draw(canvas);
+				this.qitems[ix].draw(this.canvas);
 			}
 		};
 	};
 
-	var quiver = new Quiver();
-	quiver.grid.draw(theCanvas);
+	theCanvas.quiver = new Quiver(theCanvas);
+	theCanvas.quiver.grid.draw(theCanvas);
+	var qlast = null;
 
 	theCanvas.click(function(e){
-		var pt = quiver.grid.snapPoint(e.offsetX, e.offsetY);
+		var pt = theCanvas.quiver.grid.snapPoint(e.offsetX, e.offsetY);
 		if (pt != null)
 		{
-			quiver.addPoint(pt);
-			quiver.draw(theCanvas);
+			var qpoint = theCanvas.quiver.addPoint(pt);
+			theCanvas.quiver.draw();
+			if (qlast)
+			{
+				theCanvas.quiver.addArrow(qlast, qpoint);
+				theCanvas.quiver.draw();
+			}
+			qlast = qpoint;
 		}
 		}).mouseover(function(e){
-			quiver.draw(theCanvas);
+			console.log("mouseover");
 		}).mousedown(function(e) {
 			console.log("mousedown");
-			e.preventDefault();
+		}).mouseup(function(e){
+			console.log("mouseup");
 		}).mousemove(function(e) {
 			console.log("mousemove");
-			e.preventDefault();
 		});
 });
