@@ -30,10 +30,10 @@ $('canvas.qdraw').ready(function() {
 			}
 		};
 
-		this.snapPoint = function(x, y) {
-			var roundx = Math.round(x/this.grid_size)*this.grid_size;
-			var roundy = Math.round(y/this.grid_size)*this.grid_size;
-			if (Math.abs(x-roundx) < this.snap_tol && Math.abs(y-roundy) < this.snap_tol)
+		this.snapPoint = function(pt) {
+			var roundx = Math.round(pt.x/this.grid_size)*this.grid_size;
+			var roundy = Math.round(pt.y/this.grid_size)*this.grid_size;
+			if (Math.abs(pt.x-roundx) < this.snap_tol && Math.abs(pt.y-roundy) < this.snap_tol)
 			{
 				return {x: roundx, y: roundy};
 			}
@@ -49,6 +49,7 @@ $('canvas.qdraw').ready(function() {
 	{
 		this.pt = pt;
 		this.label = label;
+		this.selected = false;
 
 		// distance from point pt
 		this.distance = function(pt) {
@@ -65,7 +66,7 @@ $('canvas.qdraw').ready(function() {
   		strokeStyle: '#000',
   		strokeWidth: 1,
   		draggable: false,
-  		fillStyle: 'black',
+  		fillStyle: this.selected ? 'red' : 'black',
   		x: this.pt.x, y: this.pt.y,
   		radius: 4
 			});
@@ -87,6 +88,7 @@ $('canvas.qdraw').ready(function() {
 		this.start = start;
 		this.end = end;
 		this.ARROW_OFFSET = 10;
+		this.selected = false;
 
 		this.norm = function() {
 			return Math.sqrt(Math.pow(this.end.pt.x - this.start.pt.x, 2) + 
@@ -145,7 +147,7 @@ $('canvas.qdraw').ready(function() {
 		this.draw = function(canvas)
 		{
 			$('canvas').drawLine({
-			  strokeStyle: '#000',
+			  strokeStyle: this.selected ? '#f00' : '#000',
 			  strokeWidth: 2,
 			  rounded: true,
 			  endArrow: true,
@@ -164,6 +166,7 @@ $('canvas.qdraw').ready(function() {
 		this.labelsAvailable = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0".split('');
 		this.grid = new Grid(20, 8);
 		this.canvas = canvas;
+		this.SNAP_TOL = 20;
 
 		this.add = function(qitem) {
 			this.qitems.push(qitem);
@@ -201,8 +204,8 @@ $('canvas.qdraw').ready(function() {
 			}
 		};
 
-		this.closestItem = function(pt) {
-			var mindist = Number.POSITIVE_INFINITY;
+		this.itemNearPtr = function(pt) {
+			var mindist = this.SNAP_TOL;
 			var closest = null;
 			for (ix in this.qitems) {
 				var dist = this.qitems[ix].distance(pt);
@@ -214,41 +217,80 @@ $('canvas.qdraw').ready(function() {
 			}
 			return closest;
 		};
+
+		this.unselectAll = function(){
+			for (ix in this.qitems) {
+				this.qitems[ix].selected = false;			}
+		};
+
+		this.drawGrid = function(){
+			this.grid.draw(this.canvas);
+		};
   
 		this.draw = function() {
 			this.canvas.clearCanvas();
-			this.grid.draw(this.canvas);
+			this.drawGrid();
 			for (ix in this.qitems) {
 				this.qitems[ix].draw(this.canvas);
 			}
 		};
+
+		this.drawDrag = function(startItem, pt) {
+		};
 	};
 
 	theCanvas.quiver = new Quiver(theCanvas);
-	theCanvas.quiver.grid.draw(theCanvas);
-	var qlast = null;
+	theCanvas.quiver.drawGrid();
+	theCanvas.dragging = false;
+	theCanvas.dragStartItem = null;
 
 	theCanvas.click(function(e){
-		var pt = theCanvas.quiver.grid.snapPoint(e.offsetX, e.offsetY);
-		if (pt != null)
-		{
-			var qpoint = theCanvas.quiver.addPoint(pt);
-			theCanvas.quiver.draw();
-			if (qlast)
+			var pt = theCanvas.quiver.grid.snapPoint({x: e.offsetX, y: e.offsetY});
+			if (pt != null)
 			{
-				theCanvas.quiver.addArrow(qlast, qpoint);
+				var qpoint = theCanvas.quiver.addPoint(pt);
 				theCanvas.quiver.draw();
 			}
-			qlast = qpoint;
-		}
 		}).mouseover(function(e){
 			console.log("mouseover");
 		}).mousedown(function(e) {
+			var pt = {x: e.offsetX, y: e.offsetY};
+			var item = theCanvas.quiver.itemNearPtr(pt);
+			if (item)
+			{				
+				theCanvas.dragStartItem = item;
+				theCanvas.dragging = true;
+			}
 			console.log("mousedown");
 		}).mouseup(function(e){
+			var pt = theCanvas.quiver.grid.snapPoint({x: e.offsetX, y: e.offsetY});
+			if (theCanvas.dragging)
+			{
+				if (pt)
+				{
+					var qpoint = theCanvas.quiver.addPoint(pt);
+					theCanvas.quiver.addArrow(theCanvas.dragStartItem, qpoint);
+					theCanvas.quiver.draw();
+				}
+			}
+			theCanvas.dragging = false;
+			theCanvas.dragStartItem = null;
 			console.log("mouseup");
 		}).mousemove(function(e) {
 			var pt = {x: e.offsetX, y: e.offsetY};
-			var item = theCanvas.quiver.closestItem(pt);
+			var item = theCanvas.quiver.itemNearPtr(pt);
+			if (theCanvas.dragging)
+			{
+				theCanvas.quiver.drawDrag(theCanvas.dragStartItem, pt);
+			}
+			else
+			{
+				theCanvas.quiver.unselectAll();
+				if (item)
+				{
+					item.selected = true;
+				}
+				theCanvas.quiver.draw();
+			}
 		});
 });
