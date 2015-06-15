@@ -252,8 +252,7 @@ $('canvas.qdraw').ready(function() {
 
 	theCanvas.quiver = new Quiver(theCanvas);
 	theCanvas.quiver.drawGrid();
-	theCanvas.dragging = false;
-	theCanvas.dragStartItem = null;
+	theCanvas.dragItem = null;
 
 	theCanvas.click(function(e){
 			var pt = theCanvas.quiver.grid.snapPoint({x: e.offsetX, y: e.offsetY});
@@ -274,18 +273,17 @@ $('canvas.qdraw').ready(function() {
 			var item = theCanvas.quiver.itemNearPtr(pt);
 			if (item)
 			{				
-				theCanvas.dragStartItem = item;
-				theCanvas.dragging = true;
+				theCanvas.dragItem = item;
 			}
 			console.log("mousedown");
 		}).mouseup(function(e){
 			var pt = theCanvas.quiver.grid.snapPoint({x: e.offsetX, y: e.offsetY});
-			if (theCanvas.dragging)
+			if (theCanvas.dragItem)
 			{
 				if (pt)
 				{
 					var qpoint = theCanvas.quiver.itemNearPtr(pt);
-					if (qpoint==theCanvas.dragStartItem)
+					if (qpoint==theCanvas.dragItem)
 					{
 						// draw loop
 					}
@@ -293,12 +291,11 @@ $('canvas.qdraw').ready(function() {
 					{
 						qpoint = theCanvas.quiver.addPoint(pt);
 					}
-					theCanvas.quiver.addArrow(theCanvas.dragStartItem, qpoint);
+					theCanvas.quiver.addArrow(theCanvas.dragItem, qpoint);
 					theCanvas.quiver.draw();
 				}
 			}
-			theCanvas.dragging = false;
-			theCanvas.dragStartItem = null;
+			theCanvas.dragItem = null;
 			console.log("mouseup");
 		}).mousemove(function(e) {
 			var pt = {x: e.offsetX, y: e.offsetY};
@@ -309,9 +306,9 @@ $('canvas.qdraw').ready(function() {
 			{
 				item.selected = true;
 			}
-			if (theCanvas.dragging)
+			if (theCanvas.dragItem)
 			{
-				theCanvas.quiver.drawDrag(theCanvas.dragStartItem, pt);
+				theCanvas.quiver.drawDrag(theCanvas.dragItem, pt);
 			}
 			else
 			{
