@@ -55,6 +55,10 @@ $('canvas.qdraw').ready(function() {
 			return Math.sqrt(Math.pow(this.pt.x-pt.x, 2) + Math.pow(this.pt.y-pt.y, 2));
 		};
 
+		this.to_str = function(){
+			return "[" + this.label + "(" + this.pt.x + "," + this.pt.y + ")]";
+		};
+
 		this.draw = function(canvas)
 		{
 			canvas.drawArc({
@@ -90,9 +94,9 @@ $('canvas.qdraw').ready(function() {
 		};
 
 		// distance from point pt
-		// not implemented so return NaN
+		// not implemented so return Number.POSITIVE_INFINITY
 		this.distance = function(pt) {
-			return NaN;
+			return Number.POSITIVE_INFINITY;
 		};
 
 		// vector in direction of arrow
@@ -132,6 +136,10 @@ $('canvas.qdraw').ready(function() {
 			12 + this.ARROW_OFFSET : this.ARROW_OFFSET;
 			return {x: Math.ceil(this.end.pt.x - this.u().x * arrow_offset), 
 				y: Math.ceil(this.end.pt.y - this.u().y * arrow_offset)};
+		};
+
+		this.to_str = function(){
+			return "[" + this.start.label + "-->" + this.end.label + "]";
 		};
 
 		this.draw = function(canvas)
@@ -194,11 +202,11 @@ $('canvas.qdraw').ready(function() {
 		};
 
 		this.closestItem = function(pt) {
-			var mindist = NaN;
+			var mindist = Number.POSITIVE_INFINITY;
 			var closest = null;
 			for (ix in this.qitems) {
 				var dist = this.qitems[ix].distance(pt);
-				if (mindist==NaN or dist < mindist)
+				if (dist < mindist)
 				{
 					closest = this.qitems[ix];
 					mindist = dist;
@@ -240,6 +248,11 @@ $('canvas.qdraw').ready(function() {
 		}).mouseup(function(e){
 			console.log("mouseup");
 		}).mousemove(function(e) {
-			console.log("mousemove");
+			var pt = {x: e.offsetX, y: e.offsetY};
+			var item = theCanvas.quiver.closestItem(pt);
+			if (item)
+			{
+				console.log("mousemove: " + item.to_str());
+			}
 		});
 });
