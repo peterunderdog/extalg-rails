@@ -315,4 +315,5 @@ $('canvas.qdraw').ready(function() {
 				theCanvas.quiver.draw();
 			}
 		});
+		$("#buttons").buttonset();
 });
