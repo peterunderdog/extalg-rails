@@ -214,7 +214,7 @@ $('canvas.qdraw').ready(function() {
 			}
 			return closest;
 		};
-
+  
 		this.draw = function() {
 			this.canvas.clearCanvas();
 			this.grid.draw(this.canvas);
@@ -250,9 +250,5 @@ $('canvas.qdraw').ready(function() {
 		}).mousemove(function(e) {
 			var pt = {x: e.offsetX, y: e.offsetY};
 			var item = theCanvas.quiver.closestItem(pt);
-			if (item)
-			{
-				console.log("mousemove: " + item.to_str());
-			}
 		});
 });
