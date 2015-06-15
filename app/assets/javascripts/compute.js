@@ -303,7 +303,7 @@ $('canvas.qdraw').ready(function() {
 		}).mousemove(function(e) {
 			var pt = {x: e.offsetX, y: e.offsetY};
 			var snapPt = theCanvas.quiver.grid.snapPoint(pt);
-			var item = theCanvas.quiver.itemNearPtr(snapPt);
+			var item = snapPt != null ? theCanvas.quiver.itemNearPtr(snapPt) : null;
 			theCanvas.quiver.unselectAll();
 			if (item)
 			{
