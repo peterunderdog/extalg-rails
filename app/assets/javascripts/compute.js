@@ -146,7 +146,7 @@ $('canvas.qdraw').ready(function() {
 
 		this.draw = function(canvas)
 		{
-			$('canvas').drawLine({
+			canvas.drawLine({
 			  strokeStyle: this.selected ? '#f00' : '#000',
 			  strokeWidth: 2,
 			  rounded: true,
@@ -236,6 +236,17 @@ $('canvas.qdraw').ready(function() {
 		};
 
 		this.drawDrag = function(startItem, pt) {
+			this.draw();
+			canvas.drawLine({
+			  strokeStyle: this.selected ? '#f00' : '#000',
+			  strokeWidth: 1,
+			  rounded: true,
+			  endArrow: true,
+			  arrowRadius: 10,
+			  arrowAngle: 30,
+			  x1: startItem.pt.x, y1: startItem.pt.y,
+			  x2: pt.x, y2: pt.y
+			});
 		};
 	};
 
@@ -248,9 +259,14 @@ $('canvas.qdraw').ready(function() {
 			var pt = theCanvas.quiver.grid.snapPoint({x: e.offsetX, y: e.offsetY});
 			if (pt != null)
 			{
-				var qpoint = theCanvas.quiver.addPoint(pt);
-				theCanvas.quiver.draw();
+				var item = theCanvas.quiver.itemNearPtr(pt);
+				if (!item)
+				{
+					var qpoint = theCanvas.quiver.addPoint(pt);
+					theCanvas.quiver.draw();
+				}
 			}
+			console.log("click");
 		}).mouseover(function(e){
 			console.log("mouseover");
 		}).mousedown(function(e) {
@@ -268,7 +284,15 @@ $('canvas.qdraw').ready(function() {
 			{
 				if (pt)
 				{
-					var qpoint = theCanvas.quiver.addPoint(pt);
+					var qpoint = theCanvas.quiver.itemNearPtr(pt);
+					if (qpoint==theCanvas.dragStartItem)
+					{
+						// draw loop
+					}
+					else if (!qpoint)
+					{
+						qpoint = theCanvas.quiver.addPoint(pt);
+					}
 					theCanvas.quiver.addArrow(theCanvas.dragStartItem, qpoint);
 					theCanvas.quiver.draw();
 				}
@@ -278,18 +302,19 @@ $('canvas.qdraw').ready(function() {
 			console.log("mouseup");
 		}).mousemove(function(e) {
 			var pt = {x: e.offsetX, y: e.offsetY};
-			var item = theCanvas.quiver.itemNearPtr(pt);
+			var snapPt = theCanvas.quiver.grid.snapPoint(pt);
+			var item = theCanvas.quiver.itemNearPtr(snapPt);
+			theCanvas.quiver.unselectAll();
+			if (item)
+			{
+				item.selected = true;
+			}
 			if (theCanvas.dragging)
 			{
 				theCanvas.quiver.drawDrag(theCanvas.dragStartItem, pt);
 			}
 			else
 			{
-				theCanvas.quiver.unselectAll();
-				if (item)
-				{
-					item.selected = true;
-				}
 				theCanvas.quiver.draw();
 			}
 		});
