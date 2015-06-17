@@ -17,3 +17,6 @@
 canvas.qdraw {
 	border: 1px solid #cccccc;
 }
+.ui-button .ui-button-text {
+	font-size: 14px;
+}
