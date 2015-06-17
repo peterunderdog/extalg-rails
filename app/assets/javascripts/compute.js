@@ -315,20 +315,18 @@ $('canvas.qdraw').ready(function() {
 				theCanvas.quiver.draw();
 			}
 		});
-		var buttonDiv = $("<div/>");
-		theCanvas.after(buttonDiv);
-
-		buttonDiv.append($("<input/>").attr("id", "btn-draw").attr("name", "radio").attr("type", "radio"))
+		var buttons = $("<div/>")
+		.append($("<input/>").attr("id", "btn-draw").attr("name", "radio").attr("type", "radio"))
 		.click(function(){
-			})
+		})
 		.append($("<label/>").attr("for", "btn-draw").text("Draw"))
 		.append($("<input/>").attr("id", "btn-move").attr("name", "radio").attr("type", "radio"))
 		.click(function(){
-			})
+		})
 		.append($("<label/>").attr("for", "btn-move").text("Select/Move"))
 		.append($("<input/>").attr("id", "btn-rela").attr("name", "radio").attr("type", "radio"))
 		.click(function(){
-			})
+		})
 		.append($("<label/>").attr("for", "btn-rela").text("Relations"))
 		.append($("<button/>").text("Delete").click(function(){
 		}))
@@ -337,4 +335,5 @@ $('canvas.qdraw').ready(function() {
 		.append($("<button/>").text("Redo").click(function(){
 		}))
 		.buttonset();
+		theCanvas.after(buttons);
 });
