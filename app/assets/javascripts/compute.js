@@ -33,14 +33,7 @@ $('canvas.qdraw').ready(function() {
 		this.snapPoint = function(pt) {
 			var roundx = Math.round(pt.x/this.grid_size)*this.grid_size;
 			var roundy = Math.round(pt.y/this.grid_size)*this.grid_size;
-			if (Math.abs(pt.x-roundx) < this.snap_tol && Math.abs(pt.y-roundy) < this.snap_tol)
-			{
-				return {x: roundx, y: roundy};
-			}
-			else
-			{
-				return null;
-			}
+			return {x: roundx, y: roundy};
 		};
 	};
 
@@ -58,6 +51,10 @@ $('canvas.qdraw').ready(function() {
 
 		this.to_str = function(){
 			return "[" + this.label + "(" + this.pt.x + "," + this.pt.y + ")]";
+		};
+
+		this.selectedForDelete = function(){
+			return this.selected;
 		};
 
 		this.draw = function(canvas)
@@ -89,6 +86,10 @@ $('canvas.qdraw').ready(function() {
 		this.end = end;
 		this.ARROW_OFFSET = 10;
 		this.selected = false;
+
+		this.selectedForDelete = function(){
+			return this.start.selectedForDelete() || this.end.selectedForDelete();
+		};
 
 		this.norm = function() {
 			return Math.sqrt(Math.pow(this.end.pt.x - this.start.pt.x, 2) + 
@@ -204,6 +205,22 @@ $('canvas.qdraw').ready(function() {
 			}
 		};
 
+		this.deleteSelectedItems = function() {
+			var deleted = false;
+			for (var i=this.qitems.length-1; i >= 0; i--)
+			{
+				if (this.qitems[i].selectedForDelete())
+				{
+					this.qitems.splice(i,1);
+					deleted = true;
+				}
+			}
+			if (deleted)
+			{
+				this.draw();
+			}
+		};
+
 		this.itemNearPtr = function(pt) {
 			var mindist = this.SNAP_TOL;
 			var closest = null;
@@ -235,18 +252,26 @@ $('canvas.qdraw').ready(function() {
 			}
 		};
 
-		this.drawDrag = function(startItem, pt) {
-			this.draw();
-			canvas.drawLine({
-			  strokeStyle: this.selected ? '#f00' : '#000',
-			  strokeWidth: 1,
-			  rounded: true,
-			  endArrow: true,
-			  arrowRadius: 10,
-			  arrowAngle: 30,
-			  x1: startItem.pt.x, y1: startItem.pt.y,
-			  x2: pt.x, y2: pt.y
-			});
+		this.drawDrag = function(pt) {
+			if (canvas.mode()=='draw')
+			{
+				this.draw();
+				canvas.drawLine({
+				  strokeStyle: this.selected ? '#f00' : '#000',
+				  strokeWidth: 1,
+				  rounded: true,
+				  endArrow: true,
+				  arrowRadius: 10,
+				  arrowAngle: 30,
+				  x1: canvas.dragItem.pt.x, y1: canvas.dragItem.pt.y,
+				  x2: pt.x, y2: pt.y
+				});
+			}
+			else if (canvas.mode()=="move")
+			{
+				canvas.dragItem.pt=pt;
+				this.draw();
+			}
 		};
 	};
 
@@ -259,10 +284,25 @@ $('canvas.qdraw').ready(function() {
 			if (pt != null)
 			{
 				var item = theCanvas.quiver.itemNearPtr(pt);
-				if (!item)
+				if (theCanvas.mode()=='draw')
 				{
-					var qpoint = theCanvas.quiver.addPoint(pt);
-					theCanvas.quiver.draw();
+					if (!item)
+					{
+						var qpoint = theCanvas.quiver.addPoint(pt);
+						theCanvas.quiver.draw();
+					}
+				}
+				else if (theCanvas.mode()=='move')
+				{
+					if (!e.ctrlKey)
+					{
+						theCanvas.quiver.unselectAll();
+					}
+					if (item)
+					{
+						item.selected = true;
+						theCanvas.quiver.draw();
+					}
 				}
 			}
 			console.log("click");
@@ -282,33 +322,44 @@ $('canvas.qdraw').ready(function() {
 			{
 				if (pt)
 				{
-					var qpoint = theCanvas.quiver.itemNearPtr(pt);
-					if (qpoint==theCanvas.dragItem)
+					if (theCanvas.mode()=='draw')
 					{
-						// draw loop
+						var qpoint = theCanvas.quiver.itemNearPtr(pt);
+						if (qpoint==theCanvas.dragItem)
+						{
+							// draw loop
+						}
+						else if (!qpoint)
+						{
+							qpoint = theCanvas.quiver.addPoint(pt);
+						}
+						theCanvas.quiver.addArrow(theCanvas.dragItem, qpoint);
+						theCanvas.quiver.draw();
 					}
-					else if (!qpoint)
+					else if (theCanvas.mode()=='move')
 					{
-						qpoint = theCanvas.quiver.addPoint(pt);
+						theCanvas.dragItem.pt = pt;
+						theCanvas.quiver.draw();
 					}
-					theCanvas.quiver.addArrow(theCanvas.dragItem, qpoint);
-					theCanvas.quiver.draw();
 				}
 			}
 			theCanvas.dragItem = null;
 			console.log("mouseup");
 		}).mousemove(function(e) {
 			var pt = {x: e.offsetX, y: e.offsetY};
-			var snapPt = theCanvas.quiver.grid.snapPoint(pt);
-			var item = snapPt != null ? theCanvas.quiver.itemNearPtr(snapPt) : null;
-			theCanvas.quiver.unselectAll();
-			if (item)
+			if (theCanvas.mode()=='draw')
 			{
-				item.selected = true;
+				var snapPt = theCanvas.quiver.grid.snapPoint(pt);
+				var item = theCanvas.quiver.itemNearPtr(snapPt);
+				theCanvas.quiver.unselectAll();
+				if (item)
+				{
+					item.selected = true;
+				}
 			}
 			if (theCanvas.dragItem)
 			{
-				theCanvas.quiver.drawDrag(theCanvas.dragItem, pt);
+				theCanvas.quiver.drawDrag(pt);
 			}
 			else
 			{
@@ -324,6 +375,10 @@ $('canvas.qdraw').ready(function() {
 		.append($("<input/>").attr("id", "btn-relations").attr("name", "radio").attr("type", "radio"))
 		.append($("<label/>").attr("for", "btn-relations").text("Relations"))
 		.append($("<button/>").text("Delete").click(function(){
+			if (theCanvas.mode()=='move')
+			{
+				theCanvas.quiver.deleteSelectedItems();
+			}
 		}))
 		.append($("<button/>").text("Undo").click(function(){
 		}))
