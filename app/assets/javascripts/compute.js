@@ -48,7 +48,6 @@ $('canvas.qdraw').ready(function() {
 		this.selected = false;
 
 		this.itemType = function(){return 'point'};
-
 		// distance from point pt
 		this.distance = function(pt) {
 			return Math.sqrt(Math.pow(this.pt.x-pt.x, 2) + Math.pow(this.pt.y-pt.y, 2));
@@ -93,7 +92,6 @@ $('canvas.qdraw').ready(function() {
 		this.selected = false;
 
 		this.itemType = function(){return 'arrow'};
-
 		this.selectedForDelete = function(){
 			return this.selected || this.start.selectedForDelete() || this.end.selectedForDelete();
 		};
@@ -178,14 +176,63 @@ $('canvas.qdraw').ready(function() {
 	var Quiver = function(canvas)
 	{
 		this.qitems = [];
+		this.undoRedoStack = []
+		this.undoRedoPtr = 0;
 		this.labelsUsed = [];
 		this.labelsAvailable = "123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0".split('');
 		this.grid = new Grid(20, 8);
 		this.canvas = canvas;
 		this.SNAP_TOL = 20;
 
-		this.add = function(qitem) {
+		// e is hash like {action: 'add', item: qitem}
+		this.pushUndo = function(e) {
+			// pop items in stack after pointer
+			var n = this.undoRedoStack.length - this.undoRedoPtr - 1;
+			if (n > 0)
+			{
+				// should recycle labels of points here
+				var rm = this.undoRedoStack.splice(-n, n);
+			}
+			this.undoRedoStack.push(e);
+			this.undoRedoPtr = this.undoRedoStack.length - 1;
+		};
+
+		this.doUndo = function() {
+			if (this.undoRedoStack.length > 0)
+			{
+				var u = this.undoRedoStack[this.undoRedoPtr-=1];
+				if (u.action=='add')
+				{
+					// item would be last one added
+					this.qitems.splice(-1,1);
+				}
+				else if (u.action=='delete')
+				{
+					this.qitems.push(u.item);
+				}
+				this.draw();
+			}
+		};
+
+		this.doRedo = function() {
+			if (this.undoRedoPtr < this.undoRedoStack.length - 1)
+			{
+				var u = this.undoRedoStack[this.undoRedoPtr+=1];
+				if (u.action == 'delete')
+				{
+					this.qitems.splice(-1,1);
+				}
+				else if (u.action == 'add')
+				{
+					this.qitems.push(u.item);
+				}
+				this.draw();
+			}
+		};
+
+		this.addItem = function(qitem) {
 			this.qitems.push(qitem);
+			this.pushUndo({action: 'add', item: qitem});
 		};
 
 		this.getLabel = function() {
@@ -202,13 +249,13 @@ $('canvas.qdraw').ready(function() {
 		this.addPoint = function(pt) {
 			var label = this.getLabel();
 			var qpoint = new QPoint(pt, label);
-			this.add(qpoint);
+			this.addItem(qpoint);
 			return qpoint;
 		};
 
 		this.addArrow = function(start, end) {
 			var qarrow = new QArrow(start, end);
-			this.add(qarrow);
+			this.addItem(qarrow);
 			return qarrow;
 		};
 
@@ -217,6 +264,7 @@ $('canvas.qdraw').ready(function() {
 			if (idx > -1)
 			{
 				this.qitems.splice(idx, 1);
+				this.pushUndo({action: 'delete', item: item});
 			}
 		};
 
@@ -334,7 +382,6 @@ $('canvas.qdraw').ready(function() {
 			var item = theCanvas.quiver.itemNearPt(pt);
 			if (item)
 			{	
-				item.selected = true;			
 				theCanvas.dragItem = item;
 			}
 			console.log("mousedown");
@@ -403,8 +450,10 @@ $('canvas.qdraw').ready(function() {
 			}
 		}))
 		.append($("<button/>").text("Undo").click(function(){
+			theCanvas.quiver.doUndo();
 		}))
 		.append($("<button/>").text("Redo").click(function(){
+			theCanvas.quiver.doRedo();
 		}));
 		theCanvas.after(buttons.buttonset());
 		$("#btn-draw").click();
