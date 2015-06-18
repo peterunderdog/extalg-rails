@@ -126,10 +126,9 @@ $('canvas.qdraw').ready(function() {
 		};
 
 		// distance from point pt
-		// not implemented so return Number.POSITIVE_INFINITY
 		this.distance = function(pt) {
 			var a = {x: pt.x - this.start.pt.x, y: pt.y - this.start.pt.y};
-			var crossProd = this.v().x*a.x - a.y*this.v().y;
+			var crossProd = -this.v().x*a.y + a.x*this.v().y;
 			var dotProd = this.v().x*a.x + this.v().y*a.y;
 			if (dotProd > 0 && dotProd < this.norm()*this.norm())
 			{
@@ -315,13 +314,14 @@ $('canvas.qdraw').ready(function() {
 				else if (theCanvas.mode()=='move')
 				{
 					var item = theCanvas.quiver.itemNearPt(pt, true);
+					var sel = item ? !item.selected : false;
 					if (!e.ctrlKey)
 					{
 						theCanvas.quiver.unselectAll();
 					}
 					if (item)
 					{
-						item.selected = true;
+						item.selected = sel;
 						theCanvas.quiver.draw();
 					}
 				}
@@ -333,7 +333,8 @@ $('canvas.qdraw').ready(function() {
 			var pt = {x: e.offsetX, y: e.offsetY};
 			var item = theCanvas.quiver.itemNearPt(pt);
 			if (item)
-			{				
+			{	
+				item.selected = true;			
 				theCanvas.dragItem = item;
 			}
 			console.log("mousedown");
