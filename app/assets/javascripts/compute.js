@@ -37,12 +37,17 @@ $('canvas.qdraw').ready(function() {
 		};
 	};
 
+	var distance = function(a, b) {
+		return Math.sqrt(Math.pow(a.x-b.x, 2) + Math.pow(a.y-b.y, 2));
+	};
 
 	var QPoint = function(pt, label)
 	{
 		this.pt = pt;
 		this.label = label;
 		this.selected = false;
+
+		this.itemType = function(){return 'point'};
 
 		// distance from point pt
 		this.distance = function(pt) {
@@ -87,19 +92,14 @@ $('canvas.qdraw').ready(function() {
 		this.ARROW_OFFSET = 10;
 		this.selected = false;
 
+		this.itemType = function(){return 'arrow'};
+
 		this.selectedForDelete = function(){
-			return this.start.selectedForDelete() || this.end.selectedForDelete();
+			return this.selected || this.start.selectedForDelete() || this.end.selectedForDelete();
 		};
 
 		this.norm = function() {
-			return Math.sqrt(Math.pow(this.end.pt.x - this.start.pt.x, 2) + 
-				Math.pow(this.end.pt.y - this.start.pt.y, 2));
-		};
-
-		// distance from point pt
-		// not implemented so return Number.POSITIVE_INFINITY
-		this.distance = function(pt) {
-			return Number.POSITIVE_INFINITY;
+			return distance(this.start.pt, this.end.pt);
 		};
 
 		// vector in direction of arrow
@@ -123,6 +123,22 @@ $('canvas.qdraw').ready(function() {
 				yy=-yy;
 			}
 			return {x: xx, y: yy};
+		};
+
+		// distance from point pt
+		// not implemented so return Number.POSITIVE_INFINITY
+		this.distance = function(pt) {
+			var a = {x: pt.x - this.start.pt.x, y: pt.y - this.start.pt.y};
+			var crossProd = this.v().x*a.x - a.y*this.v().y;
+			var dotProd = this.v().x*a.x + this.v().y*a.y;
+			if (dotProd > 0 && dotProd < this.norm()*this.norm())
+			{
+				return Math.abs(crossProd/this.norm());
+			}
+			else
+			{
+				return Math.min(distance(a, this.start.pt), distance(a, this.end.pt));
+			}
 		};
 
 		this.drawStart = function(){
@@ -221,10 +237,14 @@ $('canvas.qdraw').ready(function() {
 			}
 		};
 
-		this.itemNearPtr = function(pt) {
+		this.itemNearPt = function(pt, arrows) {
 			var mindist = this.SNAP_TOL;
 			var closest = null;
 			for (ix in this.qitems) {
+				if (!arrows && this.qitems[ix].itemType()=='arrow')
+				{
+					continue;
+				}
 				var dist = this.qitems[ix].distance(pt);
 				if (dist < mindist)
 				{
@@ -283,9 +303,9 @@ $('canvas.qdraw').ready(function() {
 			var pt = theCanvas.quiver.grid.snapPoint({x: e.offsetX, y: e.offsetY});
 			if (pt != null)
 			{
-				var item = theCanvas.quiver.itemNearPtr(pt);
 				if (theCanvas.mode()=='draw')
 				{
+					var item = theCanvas.quiver.itemNearPt(pt);
 					if (!item)
 					{
 						var qpoint = theCanvas.quiver.addPoint(pt);
@@ -294,6 +314,7 @@ $('canvas.qdraw').ready(function() {
 				}
 				else if (theCanvas.mode()=='move')
 				{
+					var item = theCanvas.quiver.itemNearPt(pt, true);
 					if (!e.ctrlKey)
 					{
 						theCanvas.quiver.unselectAll();
@@ -310,7 +331,7 @@ $('canvas.qdraw').ready(function() {
 			console.log("mouseover");
 		}).mousedown(function(e) {
 			var pt = {x: e.offsetX, y: e.offsetY};
-			var item = theCanvas.quiver.itemNearPtr(pt);
+			var item = theCanvas.quiver.itemNearPt(pt);
 			if (item)
 			{				
 				theCanvas.dragItem = item;
@@ -324,7 +345,7 @@ $('canvas.qdraw').ready(function() {
 				{
 					if (theCanvas.mode()=='draw')
 					{
-						var qpoint = theCanvas.quiver.itemNearPtr(pt);
+						var qpoint = theCanvas.quiver.itemNearPt(pt);
 						if (qpoint==theCanvas.dragItem)
 						{
 							// draw loop
@@ -350,7 +371,7 @@ $('canvas.qdraw').ready(function() {
 			if (theCanvas.mode()=='draw')
 			{
 				var snapPt = theCanvas.quiver.grid.snapPoint(pt);
-				var item = theCanvas.quiver.itemNearPtr(snapPt);
+				var item = theCanvas.quiver.itemNearPt(snapPt);
 				theCanvas.quiver.unselectAll();
 				if (item)
 				{
