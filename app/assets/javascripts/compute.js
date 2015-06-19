@@ -184,7 +184,7 @@ $('canvas.qdraw').ready(function() {
 		this.canvas = canvas;
 		this.SNAP_TOL = 20;
 
-		// e is hash like {action: 'add', item: qitem}
+		// e is hash like {action: 'add', item: qitem, pos: pos in array}
 		this.pushUndo = function(e) {
 			// pop items in stack after pointer
 			var n = this.undoRedoStack.length - this.undoRedoPtr - 1;
@@ -203,12 +203,11 @@ $('canvas.qdraw').ready(function() {
 				var u = this.undoRedoStack[this.undoRedoPtr--];
 				if (u.action=='add')
 				{
-					// item would be last one added
-					this.qitems.splice(-1,1);
+					this.qitems.splice(u.pos, 1);
 				}
 				else if (u.action=='delete')
 				{
-					this.qitems.push(u.item);
+					this.qitems.splice(u.pos, 0, u.item);
 				}
 				this.draw();
 			}
@@ -220,11 +219,11 @@ $('canvas.qdraw').ready(function() {
 				var u = this.undoRedoStack[++this.undoRedoPtr];
 				if (u.action == 'delete')
 				{
-					this.qitems.splice(-1,1);
+					this.qitems.splice(u.pos, 1);
 				}
 				else if (u.action == 'add')
 				{
-					this.qitems.push(u.item);
+					this.qitems.splice(u.pos, 0, u.item);
 				}
 				this.draw();
 			}
@@ -232,7 +231,7 @@ $('canvas.qdraw').ready(function() {
 
 		this.addItem = function(qitem) {
 			this.qitems.push(qitem);
-			this.pushUndo({action: 'add', item: qitem});
+			this.pushUndo({action: 'add', item: qitem, pos: this.qitems.length-1});
 		};
 
 		this.getLabel = function() {
@@ -264,7 +263,7 @@ $('canvas.qdraw').ready(function() {
 			if (idx > -1)
 			{
 				this.qitems.splice(idx, 1);
-				this.pushUndo({action: 'delete', item: item});
+				this.pushUndo({action: 'delete', item: qitem, pos: idx});
 			}
 		};
 
@@ -274,6 +273,7 @@ $('canvas.qdraw').ready(function() {
 			{
 				if (this.qitems[i].selectedForDelete())
 				{
+					this.pushUndo({action: 'delete', item: this.qitems[i], pos: i})
 					this.qitems.splice(i,1);
 					deleted = true;
 				}
