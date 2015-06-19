@@ -198,9 +198,9 @@ $('canvas.qdraw').ready(function() {
 		};
 
 		this.doUndo = function() {
-			if (this.undoRedoStack.length > 0)
+			if (this.undoRedoPtr >=0 && this.undoRedoStack.length > 0)
 			{
-				var u = this.undoRedoStack[this.undoRedoPtr-=1];
+				var u = this.undoRedoStack[this.undoRedoPtr--];
 				if (u.action=='add')
 				{
 					// item would be last one added
@@ -217,7 +217,7 @@ $('canvas.qdraw').ready(function() {
 		this.doRedo = function() {
 			if (this.undoRedoPtr < this.undoRedoStack.length - 1)
 			{
-				var u = this.undoRedoStack[this.undoRedoPtr+=1];
+				var u = this.undoRedoStack[++this.undoRedoPtr];
 				if (u.action == 'delete')
 				{
 					this.qitems.splice(-1,1);
