@@ -200,14 +200,17 @@ $('canvas.qdraw').ready(function() {
 		this.doUndo = function() {
 			if (this.undoRedoPtr >=0 && this.undoRedoStack.length > 0)
 			{
-				var u = this.undoRedoStack[this.undoRedoPtr--];
-				if (u.action=='add')
+				var v = this.undoRedoStack[this.undoRedoPtr--];
+				for (var i = v.length-1; i >= 0; i--)
 				{
-					this.qitems.splice(u.pos, 1);
-				}
-				else if (u.action=='delete')
-				{
-					this.qitems.splice(u.pos, 0, u.item);
+					if (v[i].action=='add')
+					{
+						this.qitems.splice(v[i].pos, 1);
+					}
+					else if (v[i].action=='delete')
+					{
+						this.qitems.splice(v[i].pos, 0, v[i].item);
+					}
 				}
 				this.draw();
 			}
@@ -216,22 +219,25 @@ $('canvas.qdraw').ready(function() {
 		this.doRedo = function() {
 			if (this.undoRedoPtr < this.undoRedoStack.length - 1)
 			{
-				var u = this.undoRedoStack[++this.undoRedoPtr];
-				if (u.action == 'delete')
+				var v = this.undoRedoStack[++this.undoRedoPtr];
+				for (var i = 0; i < v.length; i++)
 				{
-					this.qitems.splice(u.pos, 1);
-				}
-				else if (u.action == 'add')
-				{
-					this.qitems.splice(u.pos, 0, u.item);
+					if (v[i].action == 'delete')
+					{
+						this.qitems.splice(v[i].pos, 1);
+					}
+					else if (v[i].action == 'add')
+					{
+						this.qitems.splice(v[i].pos, 0, v[i].item);
+					}
 				}
 				this.draw();
 			}
 		};
 
 		this.addItem = function(qitem) {
-			this.qitems.push(qitem);
-			this.pushUndo({action: 'add', item: qitem, pos: this.qitems.length-1});
+			var pos = this.qitems.push(qitem) - 1;
+			this.pushUndo([{action: 'add', item: qitem, pos: pos}]);
 		};
 
 		this.getLabel = function() {
@@ -258,29 +264,42 @@ $('canvas.qdraw').ready(function() {
 			return qarrow;
 		};
 
+		// add a point at pt, and arrow from start to new point
+		this.addPtAndArrow = function(start, pt)
+		{
+			var label = this.getLabel();
+			var end = new QPoint(pt, label);
+			var qarrow = new QArrow(start, end);
+			var p1 = this.qitems.push(end) - 1;
+			var p2 = this.qitems.push(qarrow) - 1;
+			this.pushUndo([{action: 'add', item: end, pos: p1}, 
+				{action: 'add', item: qarrow, pos: p2}]);
+		};
+
 		this.deleteItem = function(qitem) {
 			var idx = this.qitems.indexOf(qitem);
 			if (idx > -1)
 			{
 				this.qitems.splice(idx, 1);
-				this.pushUndo({action: 'delete', item: qitem, pos: idx});
+				this.pushUndo([{action: 'delete', item: qitem, pos: idx}]);
 			}
 		};
 
 		this.deleteSelectedItems = function() {
-			var deleted = false;
+			var undo = [];
 			for (var i=this.qitems.length-1; i >= 0; i--)
 			{
 				if (this.qitems[i].selectedForDelete())
 				{
-					this.pushUndo({action: 'delete', item: this.qitems[i], pos: i})
+					undo.push({action: 'delete', item: this.qitems[i], pos: i});
 					this.qitems.splice(i,1);
 					deleted = true;
 				}
 			}
-			if (deleted)
+			if (undo.length > 0)
 			{
 				this.draw();
+				this.pushUndo(undo);
 			}
 		};
 
@@ -400,9 +419,12 @@ $('canvas.qdraw').ready(function() {
 						}
 						else if (!qpoint)
 						{
-							qpoint = theCanvas.quiver.addPoint(pt);
+							qpoint = theCanvas.quiver.addPtAndArrow(theCanvas.dragItem, pt);
 						}
-						theCanvas.quiver.addArrow(theCanvas.dragItem, qpoint);
+						else
+						{
+							theCanvas.quiver.addArrow(theCanvas.dragItem, qpoint);
+						}
 						theCanvas.quiver.draw();
 					}
 					else if (theCanvas.mode()=='move')
